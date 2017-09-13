@@ -1,0 +1,53 @@
+@mixin theme {
+	background: #fafafa;
+	@include border-radius(3px);
+	-webkit-box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+	-moz-box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+	box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=5, Direction=135, Color='#c0c0c0')";
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=5, Direction=135, Color='#c0c0c0');
+}
+
+@mixin ellipsis {
+  /* Seems to be issues with ellipsis on some mobile browsers.. so break the word instead of hiding and using ellipsis...  */
+  word-wrap:break-word;
+  @media (min-width: 768px) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-wrap:normal;
+  }
+}
+
+@mixin light-btn-gradient {
+  background:#ffffff;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fafafa), to(#e6e6e6));
+  background: -webkit-linear-gradient(0% 100% 90deg, #e6e6e6, #fafafa);
+  background: -moz-linear-gradient(0% 100% 90deg, #e6e6e6, #fafafa);
+  background: linear-gradient(0% 100% 90deg, #e6e6e6, #fafafa);
+  border-right: 1px solid #C8C8C8;
+  border-top: 1px solid #C8C8C8;
+}
+
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  -ms-border-radius: $radius;
+  border-radius: $radius;
+}
+
+@mixin text-shadow {
+  color: white;
+  text-shadow: 0 1px 1px #000;
+  font-weight:400;
+}
+
+/* Colours */
+
+$dark-blue: #4D84AB;
+$mid-blue: #4D84AB;
+$light-blue: #E4F4FF;
+$light-grey: #DDD;
+$mid-grey: #888;
+$red: #c0392b;
+$green: #5cb85c;

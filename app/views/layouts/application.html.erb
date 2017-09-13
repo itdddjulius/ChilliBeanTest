@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ChilliPharm</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="theme-color" content="#ffffff">
+  <%= stylesheet_link_tag    'application', media: 'all' %>
+  <%= javascript_include_tag 'application' %>
+  <%= javascript_include_tag 'libs/html5shiv' %>
+
+  <script src="/videojs/videojs-ie8.min.js"></script>
+  <script src="/videojs/video.js"></script>
+  <%= csrf_meta_tags %>
+</head>
+<!--[if IE 7]>         <body class="ie7"> <![endif]-->
+<!--[if IE 8]>         <body class="ie8"> <![endif]-->
+<!--[if IE 9]>         <body class="ie9"> <![endif]-->
+<!--[if gt IE 9]><!--> <body> <!--<![endif]-->
+<div class="container-fluid">
+  <header class="row">
+    <%= render partial: "shared/flash_messages", flash: flash %>
+    <div class="col-xs-9 col-sm-6">
+      <%= link_to branding_thumbnail, root_url %>
+    </div>
+    <div class="col-xs-3 col-sm-6">
+      <a href="#" id="pill-mobile-btn" class="toggle-click"><i class="fa fa-align-justify"></i></a>
+      <div id="pill" class="toggle-show-content">
+        <%= render partial: "shared/user_pill" %>
+      </div>
+    </div>
+  </header>
+  <div class="row lib-header">
+    <div class="col-xs-12 col-sm-6 lib-header-col">
+      <h1><%= current_library.name %></h1>
+      <%= link_to "All Libraries", root_path %>
+    </div>
+    <div class="col-xs-12 col-sm-6">
+      <%= form_tag library_path(current_library), method: :get do %>
+      <div id="in-lib-search" class="input-group in-lib-search">
+        <input type="text" name="search" class="form-control" placeholder="Search library" value="<%= params[:search] %>">
+        <span class="input-group-btn">
+          <button type="submit" class="btn btn-default" type="button">Search</button>
+        </span>
+      </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%= yield %>
+
+</body>
+<script type="text/javascript">
+  <% if @account_info_fields %>
+    var application_info_field_types = {
+      <% @account_info_fields.each_with_index do |info_field, index| %>
+      "<%= info_field.id %>" : "<%= info_field.field_type %>"<%= "," unless index == (@account_info_fields.size - 1) %>
+      <% end %>
+    }
+  <% end %>
+</script>
+</html>

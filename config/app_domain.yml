@@ -1,0 +1,8 @@
+development:
+  domain: 'localhost'
+production:
+  domain: <%= ENV["DOMAIN"] %>
+staging:
+  domain: <%= ENV["DOMAIN"] %>
+test:
+  domain: 'example.com'

@@ -1,0 +1,109 @@
+<div id="header">
+  <div class="container-fluid">
+    <div class="row sub-header dark clearfix">
+      <div class="col-xs-12 col-sm-8">
+        <% if params[:search].present? %>
+          Search Results for: <%= params[:search] %>
+        <% elsif params[:search_fields].present? %>
+          Search Results for: <%= params[:search_fields].to_unsafe_h.map { |key, val| val.last }.join(", ") %>
+        <% else %>
+          All Content
+        <% end %>
+      </div>
+      <div class="col-xs-12 col-sm-4">
+        <%= render 'shared/display_options' %>
+      </div>
+    </div>
+    <div class="row sub-header product-branding product-branding-asset-listing clearfix">
+      <div class="col-xs-12">
+        <%= link_to " Library Activity", activity_library_path(current_library), style: "text-decoration:underline;" %>
+        <%= link_to " Library Info", info_library_path(current_library), class: "fancybox action", "data-fancybox-type" => "ajax", style: "float: right; text-decoration:underline;" %>
+      </div>
+    </div>
+    <div class="row sub-header light">
+      <div class="col-md-12 col-lg-4 select-all">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" class="uncheck-checkbox"> Select All
+          </label>
+        </div>
+        <p class="select-assets marg-bottom-0"><%= pluralize @assets.length, "Asset" %></p>
+      </div>
+      <div class="col-md-12 col-lg-8">
+        <ul class="action-bar">
+          <li class="action-bar-action"><%= link_to "Download", "#", class: "action disabled-action disabled-action-true" %>
+            <span class="action-divider"></span>
+          </li>
+          <li class="action-bar-action"><%= link_to "Delete", delete_library_assets_path(current_library), class: "fancybox action delete disabled-action disabled-action-true", "data-fancybox-type" => "ajax" %>
+            <span class="action-divider"></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content-section clearfix">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="dropdown filter-actions">
+          <span>Filter By: </span>
+          <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+            <%= current_filter_label(params[:filter]) %>
+          </a>
+          <ul class="dropdown-menu change-value dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu">
+            <li role="presentation"><%= link_to "All File Types", filter_link("all", params[:sort], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "filter", "data-filter-value" => "all" %></li>
+            <li role="presentation"><%= link_to "Video Only", filter_link("video", params[:sort], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "filter", "data-filter-value" => "video" %></li>
+            <li role="presentation"><%= link_to "Audio Only", filter_link("audio", params[:sort], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "filter", "data-filter-value" => "audio" %></li>
+            <li role="presentation"><%= link_to "Images Only", filter_link("image", params[:sort], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "filter", "data-filter-value" => "image" %></li>
+          </ul>
+        </div>
+        <div class="dropdown filter-actions">
+          <span>Sort By: </span>
+          <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+            <%= current_sort_label(params[:sort]) %>
+          </a>
+          <ul class="dropdown-menu change-value dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu">
+            <li role="presentation"><%= link_to "Most Recent", sort_link(:created_at_desc, params[:filter], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "sort", "data-filter-value" => "created_at_desc" %></li>
+            <li role="presentation"><%= link_to "Oldest", sort_link(:created_at_asc, params[:filter], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "sort", "data-filter-value" => "created_at_asc" %></li>
+            <li role="presentation"><%= link_to "Title A-Z", sort_link(:title_asc, params[:filter], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "sort", "data-filter-value" => "title_asc" %></li>
+            <li role="presentation"><%= link_to "Title Z-A", sort_link(:title_desc, params[:filter], params[:search], "library", current_library), role: "menuitem", "data-filter-key" => "sort", "data-filter-value" => "title_desc" %></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% if @assets.any? %>
+  <% if params['display_assets'].eql?('display_assets_as_list') %>
+    <%= render 'list_view' %>
+  <% else %>
+    <%= render 'grid_view' %>
+  <% end %>
+<% elsif params[:search].present? || params[:search_fields].present? || params[:filter].present? %>
+  <div id="assets" class="content-section">
+    <div class="row no-marg">
+      <div class="col-md-6 col-md-offset-3">
+        <div class="well placeholder">
+          <h4>No Search Results</h4>
+          <p>Your search returned no results, please try an alternative search.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div id="content-section-wrap">
+    <div id="assets" class="content-section">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-6 col-md-offset-3">
+            <div class="well placeholder">
+              <h3>Welcome to Your New Library!</h3>
+              <p>To get started, upload content using the bar above, then organize it into collections using the menu on the left.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

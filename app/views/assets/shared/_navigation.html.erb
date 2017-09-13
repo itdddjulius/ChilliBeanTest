@@ -1,0 +1,7 @@
+<nav class="tabs">
+  <ul>
+    <li class="<%= asset_active_tab('show') %>"><%= link_to "Asset", library_asset_path(current_library, @asset) %></li>
+    <li class="<%= asset_active_tab('comments') %>"><%= link_to "Comments (#{@asset.comments_count})", library_asset_comments_path(current_library, @asset) %></li>
+    <li class="<%= asset_active_tab('activity') %>"><%= link_to "Activity", activity_library_asset_path(current_library, @asset) %></li>
+  </ul>
+</nav>

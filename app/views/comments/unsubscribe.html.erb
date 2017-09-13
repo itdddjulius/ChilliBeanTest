@@ -1,0 +1,72 @@
+<div id="header">
+  <div class="container-fluid">
+    <div class="row sub-header dark clearfix">
+      <div class="col-xs-12">
+        <ol class="breadcrumb">
+          <li><%= link_to current_library.name, library_path(current_library) %></li>
+          <% if defined? @asset %>
+            <li><%= @asset.title %></li>
+          <% end %>
+        </ol>
+      </div>
+    </div>
+    <div class="row sub-header light clearfix">
+      <div class="col-xs-12">
+        <ul class="action-bar" id="action-bar-asset">
+          <li class="action-bar-action"><%= link_to "Delete", delete_library_assets_path(current_library), class: "fancybox action delete", "data-fancybox-type" => "ajax" %>
+            <span class="action-divider"></span>
+          </li>
+          <li class="action-bar-action">
+            <div class="dropdown add-to">
+              <a class="action dropdown-toggle" id="add-to" data-toggle="dropdown" aria-expanded="true">Add to&hellip;
+                <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu dropdown-actions dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu">
+                <li><%= link_to "Other Library", add_to_library_library_assets_path(current_library), class: "fancybox", "data-fancybox-type" => "ajax" %></li>
+                <li><%= link_to "Collection", add_to_collection_library_assets_path(current_library), class: "fancybox", "data-fancybox-type" => "ajax" %></li>
+              </ul>
+            </div>
+            <span class="action-divider"></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row sub-header light show-collections-mobile text-align-r">
+      <div class="col-xs-12">
+      </div>
+    </div>
+  </div>
+</div>
+<div id="content-section-wrap">
+  <div id="asset" class="content-section">
+    <div class="container-fluid">
+      <div id="asset-wrap">
+        <% if @asset.video? %>
+          <% if has_transform(@asset) %>
+            <%= render 'account/assets/shared/video_player', locals: { asset: @asset } %>
+          <% else %>
+            <div id="video-pending">
+              <h2>Media Transcoding...</h2>
+              <p>Web proxy not yet available for playback.</p>
+            </div>
+            <%= asset_thumbnail(@asset, "640x480", "img-responsive") %>
+          <% end %>
+        <% elsif @asset.image? %>
+          <%= asset_thumbnail(@asset, "640x480", "img-responsive") %>
+        <% else %>
+          <%= image_tag("asset-icons/large/unknown.gif", class: "unknown img-responsive") %>
+        <% end %>
+      </div>
+      <div class="row sub-header mid clearfix">
+        <div class="col-xs-12">
+          <%= render 'account/assets/shared/navigation' %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Comments</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

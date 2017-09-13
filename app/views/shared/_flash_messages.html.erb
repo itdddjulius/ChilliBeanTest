@@ -1,0 +1,17 @@
+<% flash.each do |type, message| %>
+<div>
+  <div class="pop-message notice" style="">
+    <% if type.eql?("error") %>
+      <i class="fa fa-exclamation-triangle animated"></i>
+    <% else %>
+      <i class="fa fa-check animated"></i>
+    <% end %>
+    <% formatted_message = "" %>
+    <% message_array = message.split("<br>") %>
+    <% message_array.each do |sentence| %>
+      <%= sentence %><br><br>
+    <% end %>
+    <a href="javascript:parent.$.fancybox.close();" class="cancel-link center">Close</a>
+  </div>
+</div>
+<% end %>

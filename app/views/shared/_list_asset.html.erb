@@ -1,0 +1,30 @@
+<tr class="tr-asset-content" id="asset-<%= asset.id %>" data-id="<%= asset.id %>">
+  <td data-th="Select Asset">
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" class="check-move uncheck-checkbox">
+      </label>
+    </div>
+  </td>
+  <td>
+    <a href="<%= library_asset_path(current_library, asset) %>" data-toggle="tooltip" data-placement="bottom" title="<%= video_tags(asset) if asset.video? %>" class="list-thumb">
+      <div class="<%= list_view_video_status(asset) %>"></div>
+      <%= asset_thumbnail(asset, "150x150", "img-responsive") %>
+    </a>
+  </td>
+  <!-- Important - Use the 'table-element-ellipsis' class to ensure the tooltip can find the center of this element -->
+  <td data-th="Title: "><a href="<%= library_asset_path(current_library, asset) %>" class="table-element-ellipsis" data-toggle="tooltip" data-placement="top" title="<%= asset.title if asset.title %>"><%= asset.title %></a></td>
+
+  <td data-th="Date Added: "><span><%= date_format(asset.created_at) %></span></td>
+  <td class="hidden-th-td">
+    <% empty_class = asset.comments.any? ? "" : "no-comments" %>
+    <a href="<%= library_asset_comments_path(current_library, asset) %>" class="table-element-ellipsis <%= empty_class %>">
+      <i class="fa fa-comment"></i><%= asset.comments_count %>
+    </a>
+  </td>
+  <td class="hidden-th-td">
+    <a href="<%= library_asset_path(current_library, asset) %>">
+      <div class="open-asset-badge-list"></div>
+    </a>
+  </td>
+</tr>

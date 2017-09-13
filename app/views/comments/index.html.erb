@@ -1,0 +1,51 @@
+<% content_for :asset_tab_content do %>
+  <div class="col-md-6">
+    <h2>Comments</h2>
+    <% if @asset.comments_count == 0 %>
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="well placeholder marg-top-0">
+            <h3>No Comments</h3>
+            <p>No comments have been made on this asset.</p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+    <% @asset.comments.each do |comment| %>
+      <% next unless comment.persisted? %>
+      <div class="media row-highlight comment" id="comment-<%= comment.id %>">
+        <div class="media-left">
+          <%= avatar("media-object img-responsive avatar small") %>
+        </div>
+        <div class="media-body">
+          <%= simple_format(comment.comment, class: "comment") %>
+          <p>Posted by <b><%= comment.author.name %></b> on <%= date_format(comment.created_at) %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="col-md-6">
+    <h2>Add New Comment</h2>
+    <div class="mandatory-error">
+      <div class='errors form-group'>
+        <ul>
+          <% if @comment.errors.any? %>
+            <% @comment.errors.full_messages.each do |message| %>
+              <li class="inline-message error"><%= message %></li>
+            <% end %>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <%= form_for [current_library, @asset], url: library_asset_comments_path(current_library, @asset), method: :post, html: { role: 'form', class: 'validatable' } do |f| %>
+      <div class="form-group">
+        <%= label_tag 'comment_comment', 'Comment' %>
+        <%= text_area_tag 'comment[comment]', nil, class: 'form-control mandatory', 'data-msg-on-error' => "Comment can't be blank" %>
+      </div>
+      <%= f.submit "Add Comment", class: 'button' %>
+    <% end %>
+    <hr>
+  </div>
+<% end %>
+
+<%= render "shared/asset_layout" %>

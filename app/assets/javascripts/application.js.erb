@@ -1,0 +1,287 @@
+// This is a manifest file that'll be compiled into application.js, which will include all the files
+// listed below.
+//
+// Any JavaScript/Coffee file within this directory, lib/assets/javascripts, vendor/assets/javascripts,
+// or vendor/assets/javascripts of plugins, if any, can be referenced here using a relative path.
+//
+// It's not advisable to add code directly here, but if you do, it'll appear at the bottom of the
+// compiled file.
+//
+// Read Sprockets README (https://github.com/sstephenson/sprockets#sprockets-directives) for details
+// about supported directives.
+//
+// = require jquery
+// = require jquery-ui
+// = require jquery_ujs
+// = require bootstrap
+// = require ./libs/cropper.min
+// = require ./libs/jquery.sticky
+// = require ./libs/jquery.fancybox.min
+// = require ./libs/selectivizr.js
+// = require ./libs/jstree.min.js
+// = require ./libs/pwstrength.js
+// = require_self
+
+// = require ./account/libraries
+// = require ./libs/respond.min
+// = require ./libs/moment.js
+// = require ./libs/moment-timezone-with-data.min.js
+// = require ./libs/featherlight.min.js
+// = require ./libs/blueimp/jquery.iframe-transport.js
+// = require ./libs/blueimp/jquery.fileupload.js
+// = require ./libs/blueimp/jquery.fileupload-ui.js
+// = require ./libs/blueimp/jquery.fileupload-process.js
+// = require ./libs/blueimp/jquery.fileupload-validate.js
+
+$.widget.bridge('uibutton', $.ui.button);
+$.widget.bridge('uitooltip', $.ui.tooltip);
+
+$.ajaxSetup({
+  headers: {
+    'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+  }
+});
+
+// Fancybox
+  $(".fancybox").fancybox({
+    maxWidth  : 300,
+    maxHeight : 600,
+    fitToView : false,
+    width   : '70%',
+    height    : '70%',
+    autoSize  : false,
+    closeClick  : false,
+    openEffect  : 'none',
+    closeEffect : 'none',
+    onUpdate    : function(){
+      $.fancybox.update();
+    }
+  });
+
+$(document).ready(function() {
+  $.each($(".pop-message"), function(index, value) {
+    html = $(value).show().parent().html()
+    $(value).remove()
+    $.fancybox({
+      content : html,
+      modal: true,
+      openEffect : 'none',
+      afterShow: function () {
+        // setTimeout(function () {
+        //   $.fancybox.close();
+        // }, 5000);
+      },
+      afterClose: function () {
+        // clearTimeout();
+      }
+    });
+  })
+});
+
+function display_loader() {
+  $.fancybox.showLoading()
+}
+
+function hide_loader() {
+  $.fancybox.hideLoading()
+}
+
+function display_success(message) {
+  var timer = null;
+  $.fancybox({
+      content : "<div class='pop-message'><i class='fa fa-check'></i>" + message,
+      modal: true,
+      openEffect : 'none',
+      onUpdate : function(){
+        $.fancybox.update();
+      },
+      afterShow: function () {
+          timer = setTimeout(function () {
+              $.fancybox.close();
+          }, 2500);
+      },
+      afterClose: function () {
+          clearTimeout(timer);
+      }
+  });
+  return false;
+}
+
+function display_success_no_fade(message) {
+  $.fancybox({
+      content : "<div class='pop-message'><i class='fa fa-check'></i>" + message + "<a href='javascript:parent.$.fancybox.close();' class='button'>Close</a></div>",
+      modal: true,
+      onUpdate    : function(){
+        $.fancybox.update();
+      }
+  });
+  return false;
+}
+
+function display_fancybox(content) {
+  $.fancybox.open(
+    content,
+    {
+      maxWidth  : 300,
+      maxHeight : 600,
+      fitToView : false,
+      width   : '70%',
+      height    : '70%',
+      autoSize  : false,
+      closeClick  : false,
+      openEffect  : 'none',
+      closeEffect : 'none',
+    })
+}
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
+function previewImage(input, output) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      output.attr('src', e.target.result);
+    }
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function resetFormElement(el, ev) {
+  el.wrap('<form>').closest('form').get(0).reset();
+  el.unwrap();
+
+  // Prevent form submission
+  ev.stopPropagation();
+  ev.preventDefault();
+}
+
+function server_log(data) {
+  $.post('/logs', { log: JSON.stringify(data) })
+}
+
+$( document ).ready(function() {
+  $('[data-toggle="tooltip"]').tooltip({
+   animated : 'fade',
+   container: 'body'
+  });
+  
+  // Fix to enable dropdown links to work on ios devices
+  $('.dropdown-toggle').click(function(e) {
+    e.preventDefault();
+    setTimeout($.proxy(function() {
+      if ('ontouchstart' in document.documentElement) {
+        $(this).siblings('.dropdown-backdrop').off().remove();
+      }
+    }, this), 0);
+  });
+
+  // Simple show and hide elements function
+  $('.targetDiv').hide();
+  $("body").on("click", ".display", function(){
+    $('#div-' + $(this).attr('target')).toggle();
+    $(this).toggleClass('active')
+  });
+
+  // Show and hide elements function with chevron switching in and out
+  $('.targetDiv-chevron').hide();
+  $("body").on("click", ".display-chevron", function(){
+    $('#chevron-div-' + $(this).attr('target')).slideToggle(0);
+    $(this).find('i').toggleClass('fa-chevron-up')
+  });
+
+  // Disable links if they have a class of 'disabled-action-true'
+  $('.disabled-action').on('click',function(e) {
+    if ($(this).hasClass("disabled-action-true")) {
+      return false;
+    }
+  })
+
+  $(".load-more-activity").click(function(e) {
+    e.preventDefault();
+
+    var $button = $(this);
+    var url = $button.attr("href");
+    var page = $button.data("page");
+
+    $(".loader", $button.parent()).show();
+    $.get(url + "?page=" + page, function(data) {
+      $button.before(data);
+      $(".loader", $button.parent()).hide();
+      $button.data("page", parseInt(page) + 1);
+    });
+  });
+
+  $(".upload-window").click(function() {
+    var url = $(this).attr("href");
+    var windowName = "";
+
+    window.open(url, windowName, "height=520,width=535,locationbar=0,toolbar=0,scrollbars=1");
+    return false;
+  });
+
+  $( ".toggle-click" ).click(function() {
+    $( ".toggle-show-content" ).toggle( "slow", function() {
+    });
+  });
+
+  "use strict";
+  var options = {
+    minChar: 8,
+    bootstrap3: true,
+  };
+
+  $('#pwordstrength').pwstrength({
+    ui: { showVerdicts: true,
+   }
+  });
+
+  $("#pwordstrength").keyup(function(){
+    $(".progress").show();
+    if ($('#pwordstrength').val().length == 0) {
+      $(".progress").hide()
+    }
+  })
+
+  // If on form submit, any mandatory fields are left empty... list the fields that need to be filled in
+
+  $(".validatable").submit(function(e) {
+    var hasErrors = false
+    var errorMsg = ""
+
+    $('.error-field').removeClass("error-field")
+
+    $.each($('.mandatory'), function() {
+      if($(this).data("field-type") == "checkbox") {
+        if($(this).prop('checked') == false) {
+          hasErrors = true
+          $(this).addClass('error-field');
+          errorMsg += "<li class='inline-message error'>" + $(this).data("msg-on-error") + "</li>"
+        }
+      } else {
+        if($(this).val().length == 0) {
+          hasErrors = true
+          $(this).addClass('error-field');
+          errorMsg += "<li class='inline-message error'>" + $(this).data("msg-on-error") + "</li>"
+        }
+      }
+    })
+
+    if (hasErrors) {
+      $('.mandatory-error').removeClass('hidden');
+      $('.mandatory-error .errors ul').html(errorMsg)
+      // switch off UJS disable-with for validateable forms
+      $(".validatable [data-disable-with]").removeAttr("data-disable-with")
+      e.preventDefault()
+    }
+  })
+
+})

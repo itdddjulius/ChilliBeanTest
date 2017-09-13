@@ -1,0 +1,18 @@
+<div class="fancybox-titlebar">
+  Library Info
+</div>
+<form>
+  <div class="fancybox-content">
+    <dl class="flex-width">
+      <dt>Total Assets:</dt>
+      <dd><%= current_library.assets.count %></dd>
+      <dt>Total Asset Size:</dt>
+      <dd><%= number_to_human_size current_library.assets.sum(:filesize) %></dd>
+      <dt>Created at:</dt>
+      <dd><%= date_format(current_library.created_at) %></dd>
+    </dl>
+  </div>
+  <div class="fancybox-content clearfix">
+    <a href="javascript:parent.$.fancybox.close();" class="cancel-link left">Cancel</a>
+  </div>
+</form>

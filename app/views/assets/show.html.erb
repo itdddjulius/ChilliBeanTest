@@ -1,0 +1,49 @@
+<% content_for :asset_tab_content do %>
+  <div class="col-md-6">
+    <h2>Asset Information</h2>
+    <%= form_for [current_library, @asset] do |f| %>
+      <%= f.label :title %>
+      <%= f.text_field :title %>
+      <%= f.submit %>
+    <% end %>
+    <hr class="marg-top-15 marg-bottom-15">
+    <p>Uploaded by: <b><%= @asset.uploader.try(:email) %></b> on <b><%= date_format(@asset.created_at) %></b></p>
+    <ul id="asset-dropdowns">
+      <% if (@asset.video? || @asset.audio?) && !@asset.media_info.empty? %>
+        <li>
+          <a class="display" target="additional-info">
+            <i class="fa fa-info-circle"></i>Show Additional Info
+          </a>
+          <div class="targetDiv" id="div-additional-info">
+            <% unless @asset.media_info.empty? %>
+              <h2>Additional Information</h2>
+            <% end %>
+            <%= metadata_list_tag(JSON.parse(@asset.media_info)) unless @asset.media_info.empty? %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <h2>Available Files</h2>
+    <% if @asset.s3_name %>
+      <table id="available-files-table" class="table center-table-content">
+          <tr data-filename="<%= @asset.filename %>">
+            <td class="text-align-l">
+              Original (<%= number_to_human_size(@asset.filesize) %>)
+            </td>
+            <td class="text-align-r">
+              <%= link_to "Download", "#" %>
+            </td>
+          </tr>
+        <tr>
+          <td class="text-align-l"></td>
+          <td class="text-align-r">
+          </td>
+        </tr>
+      </table>
+    <% end %>
+  </div>
+<% end %>
+
+<%= render "shared/asset_layout" %>

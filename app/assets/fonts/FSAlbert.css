@@ -1,0 +1,12 @@
+/* Webfont: FSAlbert */@font-face {
+    font-family: 'FSAlbert';
+    src: url('FSAlbert.eot'); /* IE9 Compat Modes */
+    src: url('FSAlbert.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('FSAlbert.woff') format('woff'), /* Modern Browsers */
+         url('FSAlbert.ttf') format('truetype'); /* Safari, Android, iOS */
+         url('FSAlbert.svg#FSAlbert') format('svg'), /* Legacy iOS */
+    font-style: normal;
+    font-weight: normal;
+    text-rendering: optimizeLegibility;
+}
+

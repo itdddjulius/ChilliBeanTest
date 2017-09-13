@@ -1,0 +1,21 @@
+@import 'mixins';
+
+body.ie9 {
+  #header-sticky-wrapper {
+    margin-left:0px!important;
+    @media (min-width: 785px) {
+      margin-left: auto;
+      display: block;
+    }
+  }
+
+  #header {
+    width:100%;
+    z-index:100;
+    @media (min-width: 785px) {
+      width:auto;
+      z-index: 1;
+      right: 0px;
+    }
+  }
+}

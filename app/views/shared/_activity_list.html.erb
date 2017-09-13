@@ -1,0 +1,11 @@
+<% @activity.each do |activity| %>
+  <div class="media row-highlight">
+    <div class="media-left">
+      <%= avatar("img-responsive avatar small") %>
+    </div>
+    <div class="media-body">
+      <p><%= render partial: "activity/#{activity.action}.html.erb", locals: { activity: activity } %></p>
+      <p><i><%= date_format(activity.created_at) %></i></p>
+    </div>
+  </div>
+<% end %>

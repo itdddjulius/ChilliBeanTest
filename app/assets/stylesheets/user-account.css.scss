@@ -1,0 +1,112 @@
+@import 'mixins';
+
+ul#account-nav {
+	margin-bottom:20px;
+	li {
+		padding: 0px;
+		width: 100%;
+		margin-bottom: 10px;
+		&.active {
+			a {
+				opacity:0.7;
+    		filter:alpha(opacity=70); /* For IE8 and earlier */
+			}
+		}
+		a {
+			width: 100%;
+		}
+	}
+}
+
+.image-preview {
+  position: relative;
+}
+
+.loader {
+  position: absolute;
+  top: 50%;
+  left: 35%;
+	display: none;
+	margin: 10px 0;
+	img {
+		display: block;
+		width: 160px;
+		margin: auto;
+	}
+  z-index: 999;
+}
+
+/* Account Details Page */
+
+#pword {
+	margin-top:10px;
+	display:block;
+}
+
+#account-details {
+	.change-password {
+		margin-top:15px;
+		display:block;
+	}
+}
+
+/* Security Page */
+
+.security-col {
+	@media (min-width: 992px) {
+		margin-top:30px;
+	}
+}
+
+.session {
+	&.well {
+		padding-bottom:10px;
+		&.current {
+			border: 1px solid #A5A5A5;
+			h3 {
+				margin-top:0px;
+				margin-bottom:20px;
+			}
+		}
+		dd {
+			margin-bottom:10px;
+		}
+		.fa {
+			font-size:13px;
+		}
+	}
+}
+
+/* Notifications Page */
+
+table#notification-form {
+  table-layout: fixed;
+  &:first-child {
+  	background:red;
+  }
+  tr:first-child {
+  	input {
+  		display:block;
+  		margin-left:auto;
+  		margin-right:auto;
+  	}
+  	th {
+  		background: whitesmoke;
+  	}
+  	td {
+  		background: none;
+  	}
+  }
+  th, td {
+    word-wrap:break-word;
+    &:first-child {
+    	text-align:left;
+    }
+  }
+}
+
+#upload-notifications-check {
+  label {
+    font-weight:700;
+  }
+}

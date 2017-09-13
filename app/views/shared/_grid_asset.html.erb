@@ -1,0 +1,17 @@
+<div class="asset" id="asset-<%= asset.id %>" data-id="<%= asset.id %>">
+  <div class="asset-content item">
+    <%= asset_thumbnail(asset, "150x150") %>
+    <div class="asset-badges file-type-badge <%= asset_file_type_icon(asset) %>"></div>
+    <%= link_to library_asset_path(current_library, asset) do %>
+      <div class="asset-badges open-asset-badge-grid"></div>
+    <% end %>
+    <div class="asset-info clearfix">
+      <%= link_to asset.title.to_s, "#", class: "asset-tool", "data-toggle" => "tooltip", title: asset.title %>
+    </div>
+  </div>
+  <% if asset.video? %>
+    <div class="hidden-content">
+      <%= video_tags(asset) %>
+    </div>
+  <% end %>
+</div>

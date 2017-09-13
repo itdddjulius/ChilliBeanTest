@@ -1,0 +1,10 @@
+$product-branding: #4d84ab;
+$product-branding-secondary: #2A597A;
+$product-branding-light: #e4f4ff;
+
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap:normal;
+}

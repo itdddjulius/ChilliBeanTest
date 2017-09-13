@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ChilliPharm</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="theme-color" content="#ffffff">
+  <%= stylesheet_link_tag    'application', media: 'all' %>
+  <%= csrf_meta_tags %>
+  <%= javascript_include_tag 'libs/html5shiv' %>
+</head>
+<!--[if IE 7]>         <body class="ie7"> <![endif]-->
+<!--[if IE 8]>         <body class="ie8"> <![endif]-->
+<!--[if IE 9]>         <body class="ie9"> <![endif]-->
+<!--[if gt IE 9]><!--> <body> <!--<![endif]-->
+<div class="container-fluid">
+  <header class="row">
+    <%= render partial: "shared/flash_messages", flash: flash %>
+      <div class="col-xs-9 col-sm-6">
+        <%= link_to branding_thumbnail, root_url %>
+      </div>
+      <div class="col-xs-3 col-sm-6 pill-col">
+        <a href="#" id="pill-mobile-btn" class="toggle-click"><i class="fa fa-align-justify"></i></a>
+        <div id="pill" class="toggle-show-content">
+          <%= render partial: "shared/user_pill" %>
+        </div>
+      </div>
+  </header>
+  <div class="row lib-dashboard-header">
+    <div class="col-sm-6">
+      <h1>Libraries</h1>
+    </div>
+  </div>
+  <%= yield %>
+  <footer class="row">
+    <div class="col-xs-12">
+      <p>Powered by ChilliPharm</p>
+    </div>
+  </footer>
+</div>
+<%= javascript_include_tag 'application' %>
+</body>
+</html>

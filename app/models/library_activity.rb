@@ -1,0 +1,2 @@
+class LibraryActivity < Activity
+end

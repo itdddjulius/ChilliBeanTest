@@ -1,0 +1,1214 @@
+
+$( document ).ready(function() {
+
+  // Variables
+  var new_collection_url = $(".myTreeList").data("new-collection-url")
+  var new_folder_url = $(".myTreeList").data("new-folder-url")
+  var update_collection_url = $(".myTreeList").data("update-collection-url")
+  var update_folder_url = $(".myTreeList").data("update-folder-url")
+  var collection_assets_url = $(".myTreeList").data("collection-assets-url")
+  var add_assets_to_collection_url = $(".myTreeList").data("collection-add-assets-url");
+  var library_url = $(".myTreeList").data("library-url");
+  var library_id = $(".myTreeList").data("library-id")
+  var collection_url = $(".myTreeList").data("collection-url");
+  var tree = null
+  var rename_interval
+  var update_retry_count = 0
+  var max_retries = 5
+  var cancel_edit_animation = false
+  var hover_node
+  var dragging_now = false
+
+  // Functions
+
+  function set_margins_if_mobile() {
+    if ($(window).width() < 992 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      $(".content-section, #content-footer, #header").addClass("no-marg")
+      $("#sidebar").hide()
+      $(".show-collections-mobile").show()
+    } else if ($(window).width() >= 992 || !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // If window is at larger than mobile size add margins to calculate left margins based upon sidebar
+      $(".content-section, #content-footer, #header").removeClass("no-marg")
+      $("#sidebar").show()
+      $(".show-collections-mobile").hide()
+      // Update sticky plugin to check if sidebar and header should be sticky
+      $("#sidebar").sticky('update')
+      $("#header").sticky('update')
+    }
+  }
+
+  function node_options_timeout() {
+    setTimeout(function(){
+      // Hide node-options after 0.5 seconds
+      if (!cancel_edit_animation) {
+        $(".node-options").hide()
+      }
+    }, 500)
+  }
+
+  function rename_node(node_id, parent_id) {
+    var node = tree.get_node(node_id)
+    var id = get_data_id(node)
+    if(id) {
+      update_node(node.type, id, node.text, null, parent_id)
+      if(rename_interval) {
+        clearInterval(rename_interval)
+        update_retry_count = 0
+      }
+      update_retry_count = 0
+    } else {
+      // The node hasn't been created in the backend yet, try again in 600ms
+      update_retry_count++
+      rename_interval = setTimeout(function(){ rename_node(node_id, parent_id); }, 600)
+
+      if(update_retry_count >= max_retries) {
+        clearInterval(rename_interval)
+        update_retry_count = 0
+      }
+    }
+  }
+
+  function no_nodes_check() {
+    if($(".jstree-container-ul").has("li").length == 0) {
+      $("#no-nodes").show();
+      $("#sidebar-settings, #search-tree").removeClass("active")
+      $("#sidebar-settings a, #search-tree").addClass("disabled")
+      $("#node-actions, #search-tree-form, #delete-all").hide()
+      $("#node-actions, .hide-checkboxes").hide()
+      cancel_search()
+    } else {
+      $("#sidebar-settings a, #search-tree").removeClass("disabled")
+    }
+  }
+
+  function get_data_id(node) {
+    if(node) {
+      if(node.id !== "#") {
+        var $node = $("#" + node.id)
+        if(node.li_attr.hasOwnProperty("data-id")) {
+          return node.li_attr["data-id"]
+        } else if(node.li_attr.hasOwnProperty("dataId")) {
+          return node.li_attr["dataId"]
+        } else if($node.data("id")) {
+          return $node.data("id")
+        } else {
+          return null
+        }
+      }
+    }
+    return null
+  }
+
+  function update_node(type, id, name, position, parent_id) {
+    if(typeof(parent_id) == "undefined" || parent_id == null) {
+      var parent_data_id = "#"
+    } else {
+      var parent = tree.get_node(parent_id)
+      var parent_data_id = get_data_id(parent)
+    }
+
+    if(parent_id == "#") {
+      parent_data_id = "#"
+    }
+
+    if(position !== null) {
+      var prev_node = tree.get_node(parent.children[position - 1])
+      var next_node = tree.get_node(parent.children[position + 1])
+      var prev_node_id = get_data_id(prev_node)
+      var next_node_id = get_data_id(next_node)
+    } else {
+      var prev_node_id = null
+      var next_node_id = null
+    }
+
+    if(type == "collection") {
+      persistance_url = update_collection_url.replace("%23",id)
+      $.ajax({
+        url: persistance_url,
+        type: "PUT",
+        data: { collection: { name: name }, parent_id: parent_data_id, prev_node: prev_node_id, next_node: next_node_id },
+        success: function(data, status, xhrObj) {
+        },
+        error: function(xhrObj, status, errorThrown) {
+          tree.refresh()
+          if(xhrObj.status == 403) {
+            display_fancybox("<div class='fancybox-content'>" + xhrObj.responseJSON.message + "</div>")
+          } else {
+            display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong updating the collection. Please try again later.</div>")
+          }
+        },
+        complete: function() {
+          // re-enable create node buttons
+          $("#thetree").removeClass("editing")
+          $("#create-node-folder").removeClass("disabled")
+          $("#create-node-collection").removeClass("disabled")
+        }
+      })
+    } else if(type == "folder") {
+      persistance_url = update_folder_url.replace("%23",id)
+      $.ajax({
+        url: persistance_url,
+        type: "PUT",
+        data: { folder: { name: name }, parent_id: parent_data_id, prev_node: prev_node_id, next_node: next_node_id },
+        success: function(data, status, xhrObj) {
+        },
+        error: function(xhrObj, status, errorThrown) {
+          tree.refresh()
+          if(xhrObj.status == 403) {
+            display_fancybox("<div class='fancybox-content'>" + xhrObj.responseJSON.message + "</div>")
+          } else {
+            display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong updating the folder. Please try again later.</div>")
+          }
+        },
+        complete: function() {
+          // re-enable create node buttons
+          $("#create-node-folder").removeClass("disabled")
+          $("#create-node-collection").removeClass("disabled")
+          $("#thetree").removeClass("editing")
+        }
+      })
+    }
+  }
+
+  // Calculate how tall the sidebar should be (when position:relative)
+  function find_sidebar_height() {
+    if ($("#sidebar-content").length > 0) {
+      var window_height = $(window).height()
+      var distance_from_top = $("#sidebar-content").offset().top
+      var distance_scrolled = $(window).scrollTop()
+      var sidebar_height = window_height - distance_from_top + distance_scrolled - $("#sidebar-footer").height() - (parseInt($("#sidebar-content").css('padding-top').replace("px", "")) + parseInt($("#sidebar-content").css('padding-bottom').replace("px", "")))
+      $("#sidebar-content").height(sidebar_height)
+    }
+  }
+
+  // Show the 'show checkboxes' link
+  function display_hide_bulk_delete_link() {
+    $(".hide-checkboxes").show()
+    $(".show-checkboxes").hide()
+    $("#sidebar-settings").addClass("active")
+  }
+
+  // Show the 'hide checkboxes' link
+  function display_show_bulk_delete_link() {
+    $(".show-checkboxes").show()
+    $(".hide-checkboxes").hide()
+    $("#sidebar-settings").removeClass("active")
+  }
+
+  // Enable bulk delete functionality
+  function enable_bulk_edit_mode() {
+    display_hide_bulk_delete_link()
+    $("#node-actions").show()
+    show_select_all_link()
+
+    $(".myTreeList").addClass("checkboxes-visible")
+    // Clear any selections made in hidden multi-edit mode
+    clear_selected()
+    return $(".myTreeList").jstree('show_checkboxes')
+  }
+
+  // Disable bulk delete functionality
+  function disable_bulk_edit_mode() {
+    display_show_bulk_delete_link()
+    $(".myTreeList").removeClass("checkboxes-visible")
+    // $("#select-all-nodes").hide()
+    // $("#deselect-all-nodes").hide()
+    $("#node-actions").hide()
+    $("#delete-all").hide()
+
+    // Clear any selections made in multi-edit checkbox mode
+    clear_selected()
+    return $(".myTreeList").jstree('hide_checkboxes')
+  }
+
+  // show deselect all link
+  function show_deselect_all_link() {
+    $("#deselect-all-nodes").show()
+    $("#select-all-nodes").hide()
+  }
+
+  // show select all link
+  function show_select_all_link() {
+    $("#select-all-nodes").show()
+    $("#deselect-all-nodes").hide()
+  }
+
+  // Check if any nodes are are selected
+  function check_any_selected() {
+    return $(".jstree-anchor.jstree-checked").length > 0
+  }
+
+  function check_select_btn_state() {
+    if (check_any_selected() == true) {
+      show_deselect_all_link()
+    } else {
+      show_select_all_link()
+    }
+  }
+
+  function get_checked_nodes() {
+    var checked_nodes = $(".jstree-checked")
+    // If there are checked nodes, show delete selected button
+
+    if(checked_nodes.length == 0) {
+      $("#delete-all").hide()
+    } else {
+      $("#delete-all").show()
+    }
+  }
+
+  // Uncheck all nodes
+  function clear_selected() {
+    $(".myTreeList").jstree('uncheck_all')
+    $(".myTreeList").jstree('deselect_all')
+    $(".jstree-anchor").removeClass("disabled-check")
+  }
+
+  function edit_last() {
+    $('.myTreeList').jstree().edit('.jstree-last:last')
+    $("#thetree").addClass("editing")
+    $(".node-options").hide()
+  }
+
+  function edit_last_child() {
+    $('.myTreeList').jstree().edit("#"+hover_node.id + " li:last")
+    $("#thetree").addClass("editing")
+    $(".node-options").hide()
+  }
+
+  // Check if the node has any children, if not give it 'empty' class
+  function is_empty(node, callback) {
+    if(node.id != "#") {
+      var $node = $("#" + node.id)
+      if(node.type == "collection") {
+        // Check if it has assets
+        var collection_id = get_data_id(node)
+        var get_collection_assets_url = collection_assets_url.replace("%23", collection_id)
+        $.get(get_collection_assets_url, function(assets, status, xhr) {
+          if(assets.length == 0) {
+            callback(node, true, assets.length)
+            $(node).find("li").addClass("empty")
+            node.li_attr['class'] += ' empty'
+            $node.addClass('empty')
+          } else {
+            callback(node, false, assets.length)
+            node.li_attr['class'] = node.li_attr['class'].replace('empty', '')
+            $node.removeClass('empty')
+          }
+        })
+      } else if(node.type == "folder") {
+        // Check if it has nested children
+        if(node.children.length == 0) {
+          callback(node, true, node.children.length)
+          node.li_attr['class'] += " empty"
+          $node.addClass('empty')
+        } else {
+          callback(node, false, node.children.length)
+          if(node.li_attr['class']) {
+            node.li_attr['class'] = node.li_attr['class'].replace('empty', '')
+          }
+          $node.removeClass('empty')
+        }
+      }
+    }
+  }
+
+  function set_empty_state(node, empty) {
+    var $node = $("#" + node.id)
+
+    if(empty == true) {
+      node.li_attr['class'] += " empty"
+      $node.addClass('empty')
+    } else {
+      if(node.li_attr['class']) {
+        node.li_attr['class'] = node.li_attr['class'].replace('empty', '')
+      }
+      $node.removeClass('empty')
+    }
+  }
+
+  function disable_child_selection(node) {
+    // Check whether node is checked
+    if ($("#" + node.id).children("a").hasClass("jstree-checked")) {
+      // Mark all children as checked
+      $("#" + node.id).children("ul").find("a").addClass("disabled-check")
+      $.each(node.children, function(i, child) {
+        child_node = tree.get_node(child)
+        // Add the class to the node data attribute
+        $("#" + child_node.id).find("a").addClass("disabled-check")
+        // Makes sure the 'disabled-check' class stays after a tree refresh
+        tree.get_node(child).a_attr['class'] += ' disabled-check'
+        // Process each child node to see if any of them are checked
+        disable_child_selection(child_node)
+      })
+    } else {
+      $("#" + node.id).children("ul").find("a").removeClass("disabled-check")
+      // Process each child node to see if any of them are checked
+      $.each(node.children, function(i, child) {
+        // Re-run this function for each child
+        disable_child_selection(tree.get_node(child))
+      })
+    }
+  }
+
+  // set the collection nodes in the jstree to be droppable - after the jstree has finished loading
+  function make_droppable($elements) {
+    $elements.droppable({
+      tolerance: "pointer"
+    })
+
+    $elements.off("drop", drop)
+    $elements.on("drop", drop)
+  }
+
+  function make_draggable($elements) {
+    $elements.draggable({
+      zIndex: 999,
+      cursor: "move",
+      cursorAt: { top: -360, left: -300 },
+      helper: function(event) {
+        return $( "<div class='drag-asset'><div><img src='' /></div><span></span></div>" );
+      }
+    });
+  }
+
+  function remove_draggable($elements) {
+    $elements.each(function(i, row) {
+      $(row).draggable("destroy")
+    })
+  }
+
+  function drop(event, ui){
+    // add the assets to the collection on the server
+    var selected_asset_ids = []
+    var $collection = $(event.currentTarget)
+    var collection_node = tree.get_node($collection.attr("id"))
+    var collection_id = get_data_id(collection_node)
+
+    selected_asset_ids = get_selected_assets()
+
+    persistance_url = add_assets_to_collection_url.replace("%23",collection_id);
+
+    var $sidebar = $("#sidebar")
+    var offset = $sidebar.offset()
+    var xmin = offset.left
+    var xmax = $sidebar.outerWidth(true) + offset.left
+    var ymin = offset.top
+    var ymax = $sidebar.outerHeight(true) + offset.top
+
+    if((event.pageX > xmin && event.pageX < xmax) && (event.pageY > ymin && event.pageY < ymax)) { // make sure that the drop event is happening within the sidebar
+      display_loader()
+      // do ajax call to collection#add_assets
+      $.post(persistance_url, { asset_ids: selected_asset_ids }, function(data, status) {
+        hide_loader()
+        display_success("Assets added to <a href='" + collection_node.a_attr.href + "'>" + $collection.find("a").text() + "</a>")
+        // update the empty class state & update the collection node asset count
+        is_empty(collection_node, function(node, empty, children_count) {
+          set_empty_state(node, empty)
+          if(node.type == "collection") {
+            node.data.jstree.asset_count = children_count
+          }
+        })
+      })
+      .fail(function(obj, status, message) {
+        hide_loader()
+
+        if(obj.status == 403) {
+          display_fancybox("<div class='fancybox-content'>" + obj.responseJSON.message + "</div>")
+        } else {
+          display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong adding the assets. Please try again later.</div>")
+        }
+      })
+    }
+  }
+
+  function store_search_term() {
+    if(search_term != "") {
+      $(".myTreeList").jstree().search(search_term);
+      $("#thetree").show()
+      if ($(".jstree-search").length > 0) {
+        $("#no-search-results").hide()
+      } else {
+        $("#thetree, #delete-all").hide()
+        $(".no-search-results").show()
+      }
+    }
+  }
+
+  function empty_search_field() {
+    if($("#search-tree-input").val() != ""){
+      $("#clear-node-search").show()
+      $(".node-search-btn").removeClass("disabled")
+      $('.node-search-btn').prop("disabled", false);
+    } else if($("#search-tree-input").val() == ""){
+      cancel_search()
+    }
+  }
+
+  function cancel_search() {
+    search_term = ""
+    $('[data-toggle="button-tooltip"]').tooltip('disable')
+    $(".myTreeList").jstree('clear_search')
+    $("#search-tree-input").val("")
+    $("#thetree, #sidebar-settings, #search-tree").show() // delete node-actions?
+    $("#no-search-results, #clear-node-search, #clear-node-search").hide()
+    $("#create-node-folder, #create-node-collection").removeClass("disabled")
+
+    if (!$("#no-nodes").is(":visible")) {
+      $("#sidebar-settings a").removeClass("disabled")
+    }
+
+    $(".node-search-btn").addClass("disabled")
+    $('.node-search-btn').prop("disabled", true);
+  }
+
+  function submit_delete_node(node, delete_assets) {
+    var delete_url = node.data.jstree.access_url
+
+    $(".node-options").hide()
+    display_loader()
+
+    $.ajax({
+      url: delete_url,
+      data: { delete_assets: delete_assets },
+      method: "DELETE",
+      success: function() {
+        no_nodes_check()
+        hide_loader()
+        store_search_term()
+        if(node.type == "collection") {
+          display_success("Collection Deleted")
+        } else if(node.type == "folder") {
+          display_success("Folder Deleted")
+        }
+
+        // if trying to delete the collection we are in, redirect to library
+        if(typeof collection_url != 'undefined' && collection_url.indexOf(get_data_id(node)) > -1) {
+          window.location = library_url
+        }
+
+        // if trying to delete any of the ancestors we are in, redirect to library
+        var node_children = node.children_d
+        $.each(node_children, function(i, node_id) {
+          var child_node = tree.get_node(node_id)
+
+          if(typeof collection_url != 'undefined' && collection_url.indexOf(get_data_id(child_node)) > -1) {
+            window.location = library_url
+          }
+        })
+
+        $('.myTreeList').jstree().delete_node(node.id)
+      },
+      error: function(xhrObj, status, errorThrown) {
+        hide_loader()
+        tree.refresh()
+        if(xhrObj.status == 403) {
+          display_fancybox("<div class='fancybox-content'>" + xhrObj.responseJSON.message + "</div>")
+        } else {
+          message = "<div class='fancybox-content'>Oh No! Something went wrong deleting this " + node.type + ". Please try again later.</div>"
+          display_fancybox(message)
+        }
+      }
+    })
+  }
+
+  function submit_delete_nodes(nodes, delete_assets) {
+    var redirect = false
+    var delete_success = []
+    $(".node-options").hide()
+    display_loader()
+
+    $.each(nodes, function(i, node) {
+      var delete_url = node.data.jstree.access_url
+      var $node = $("#"+node.id)
+      var $a_node = $node.find("a.jstree-anchor")
+      $.ajax({
+        url: delete_url,
+        data: { delete_assets: delete_assets },
+        method: "DELETE",
+        success: function() {
+          $('.myTreeList').jstree().delete_node(node.id)
+          no_nodes_check()
+          delete_success.push(true)
+        },
+        error: function() {
+          // check if the node still exists, if not just remove it from the dom
+          $.get(delete_url, function(response) {
+            if(response == "false") {
+              $('.myTreeList').jstree().delete_node(node.id)
+              no_nodes_check()
+              delete_success.push(true)
+            } else {
+              delete_success.push(false)
+            }
+          })
+        }
+      })
+
+      // if trying to delete the collection we are in, redirect to library
+      if(typeof collection_url != 'undefined' && collection_url.indexOf(get_data_id(node)) > -1) {
+        redirect = true
+      }
+    })
+
+    var delete_complete = setInterval(function() {
+      if(delete_success.length == nodes.length) {
+        if(delete_success.indexOf(false) > -1) {
+          // at least one node failed to delete
+          clearInterval(delete_complete)
+          hide_loader()
+          tree.refresh()
+          display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong deleting the collections/folders. Please try again later.</div>")
+        } else {
+          // all nodes deleted - success!
+          clearInterval(delete_complete)
+          get_checked_nodes()
+          hide_loader()
+          store_search_term()
+          show_select_all_link()
+          no_nodes_check()
+          display_success("Collections / Folders Deleted")
+          if(redirect == true) {
+            window.location = library_url
+          }
+        }
+      }
+    }, 200)
+  }
+
+  function get_selected_assets() {
+    var selected_asset_ids = []
+
+    $.each($(".ui-selected"), function(i, asset) {
+      var $asset = $(asset)
+
+      // if in grid view get the asset id this way
+      if($(".content-section.grid").length > 0) {
+        selected_asset_ids.push($asset.closest(".asset").data("id"))
+      }
+      // if in list view get the asset id this way
+      else if($(".content-section.list").length > 0) {
+        selected_asset_ids.push($asset.data("id"))
+      }
+    })
+
+    return selected_asset_ids
+  }
+
+  function createDownloadIFrame(url, triggerDelay, cleaningDelay) {
+    setTimeout(function () {
+      var $frame = $('<iframe style="display: none;" src="' + url + '" class="multi-download-frame"></iframe>')
+      $("body").append($frame)
+      // if the iframe gets removed before the download initiates the download will get cancelled
+      // so for that reason, I'm not cleaning up the iframe
+      // setTimeout(function () { $frame.remove() }, cleaningDelay)
+    }, triggerDelay)
+  }
+
+  function download_files(files) {
+    function download_next(i) {
+      if(i >= files.length) {
+        return;
+      }
+      var a = document.createElement('a');
+      a.href = files[i].download;
+      a.target = '_parent';
+      // Use a.download if available, it prevents plugins from opening.
+      if ('download' in a) {
+        a.download = files[i].filename;
+      }
+      // Add a to the doc for click to work.
+      (document.body || document.documentElement).appendChild(a);
+      if (a.click) {
+        a.click(); // The click method is supported by most browsers.
+      } else {
+        $(a).click(); // Backup using jquery
+      }
+      // Delete the temporary link.
+      a.parentNode.removeChild(a);
+      // Download the next file with a small timeout. The timeout is necessary
+      // for IE, which will otherwise only download the first file.
+      setTimeout(function () { download_next(i + 1); }, 500);
+    }
+    // Initiate the first download.
+    download_next(0);
+  }
+
+  set_margins_if_mobile()
+
+  // ASSETS DRAGGING
+  make_draggable($(".asset"))
+
+  // makes sure the clicked asset is selected during dragging
+  // also appends the number of selected assets to the drag icon helper
+  $(".asset, .tr-asset-content").on("dragstart", function(event, ui) {
+
+    $(".drag-asset").appendTo("body");
+
+    var $selected_grid_asset = $(event.currentTarget).children(".asset-content").first()
+    var $selected_list_asset = $(event.currentTarget).first()
+
+    if($selected_grid_asset.length > 0) {
+      if($selected_grid_asset.hasClass("ui-selected") == false) {
+        $selected_grid_asset.addClass("ui-selecting");
+        $(".ui-selected").removeClass("ui-selected");
+      }
+
+      if($(".content-section").length > 0) {
+        $(".content-section#assets.grid").data("ui-selectable")._mouseStop(null);
+      }
+
+      $(".drag-asset span").html($(".ui-selected").length)
+      $(".drag-asset img").attr("src", $selected_grid_asset.children("img").first().attr("src"))
+    } else if($selected_list_asset.length > 0) {
+      $(".drag-asset span").html($(".ui-selected").length)
+      $(".drag-asset img").attr("src", $selected_list_asset.find("img").first().attr("src"))
+    }
+  });
+
+  // ASSETS DROPPING
+  $('.myTreeList').on('ready.jstree', function(e, data) {
+    $("body").addClass("jstree-ready")
+    make_droppable($("li.collection"))
+  })
+
+  $('.myTreeList').on('redraw.jstree', function(e, data) {
+    make_droppable($("li.collection"))
+  })
+
+  $('.myTreeList').on('refresh.jstree', function(e, data) {
+    make_droppable($("li.collection"))
+  })
+
+  $(".myTreeList").on("before_open.jstree", function(event, data) {
+    make_droppable($("li.collection"))
+  })
+
+  // Clicking delete collection from node options menu
+  $("body").on("click", ".del-collection, .del-folder", function(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    var node_id = $(this).attr("data-node-id")
+    var node = tree.get_node(node_id)
+    var data_id = get_data_id(node)
+    var url = $(this).data("url").replace("PLACEHOLDER", data_id)
+    // check if the collection is empty
+    is_empty(node, function(node, empty) {
+      if(empty==true) {
+        // delete it right away
+        submit_delete_node(node, false)
+      } else {
+        // open the fancybox delete dialog
+        display_loader()
+        $.get(url, function(data){
+          display_fancybox(data)
+          hide_loader()
+        })
+      }
+    })
+  })
+
+  $("a.new_node").click(function(e) {
+    e.preventDefault();
+    var form = $(this).next('form')[0];
+    $(form).toggleClass('hidden');
+  });
+
+  // Assets
+  $(".asset").mouseover(function() {
+    $(this).addClass("hover")
+  })
+
+  $(".asset").mouseleave(function() {
+    $(this).removeClass("hover")
+  })
+
+  // Asset List View
+  $(".tr-asset-content input[type='checkbox']").click(function(){
+    var $checkbox = $(this)
+
+    if($checkbox.is(":checked")) {
+      $(this).addClass("checked")
+      make_draggable($(this).closest(".tr-asset-content"))
+      $(this).closest('tr').addClass("selected-tr ui-selected")
+    } else {
+      $(this).removeClass("checked")
+      remove_draggable($(this).closest(".tr-asset-content"))
+      $(this).closest('tr').removeClass("selected-tr ui-selected")
+    }
+
+    check_selected_assets()
+  })
+
+  // Select all assets
+  $("body").on("click", ".select-all input[type='checkbox']", function() {
+    var $checkbox = $(this)
+
+    if($checkbox.is(":checked")) {
+      if($(".content-section.grid").length > 0) {
+        $(".asset-content").addClass("ui-selecting")
+        $(".content-section#assets.grid").data("ui-selectable")._mouseStop(null)
+      } else if($(".content-section.list").length > 0) {
+        make_draggable($(".tr-asset-content"))
+        $(".tr-asset-content").addClass("selected-tr ui-selected")
+        $(".tr-asset-content input[type='checkbox']").prop('checked', true)
+        $(".tr-asset-content input[type='checkbox']").addClass('checked')
+      }
+    } else {
+      if($(".content-section.grid").length > 0) {
+        $(".asset-content").removeClass("ui-selected")
+      } else if($(".content-section.list").length > 0) {
+        remove_draggable($(".tr-asset-content"))
+        $(".tr-asset-content").removeClass("selected-tr ui-selected")
+        $(".tr-asset-content input[type='checkbox']").prop('checked', false)
+        $(".tr-asset-content input[type='checkbox']").removeClass('checked')
+      }
+    }
+
+    check_selected_assets()
+  })
+
+  function check_selected_assets() {
+    //get number of assets on the page
+    var total_assets = 0
+    if($(".content-section.list").length > 0) {
+      total_assets = $(".tr-asset-content").length
+    } else if($(".content-section.grid").length > 0) {
+      total_assets = $(".asset").length
+    }
+
+    label_text = "Assets"
+    if (total_assets == 1) {
+      label_text = "Asset"
+    }
+
+    var selected_assets = $(".ui-selected").length
+
+    if(total_assets == 0) {
+      $(".select-all input[type='checkbox']").prop('checked', false)
+    } else if(selected_assets == total_assets) {
+      $(".select-all input[type='checkbox']").prop('checked', true)
+    } else {
+      $(".select-all input[type='checkbox']").prop('checked', false)
+    }
+
+    if($(".content-section.list").length > 0) {
+      if ($(".tr-asset-content").hasClass("ui-selected")) {
+        $(".disabled-action").removeClass("disabled-action-true")
+      } else {
+        $(".disabled-action").addClass("disabled-action-true")
+      }
+    } else if($(".content-section.grid").length > 0) {
+      if ($(".asset-content").hasClass("ui-selected")) {
+        $(".disabled-action").removeClass("disabled-action-true")
+      } else {
+        $(".disabled-action").addClass("disabled-action-true")
+      }
+    }
+  }
+
+  // Uncheck the checkboxes and run the check_selected_assets function to ensure that the actionbar items are in their correct states
+  function uncheck_checkboxes() {
+    if($(".uncheck-checkbox").is(':checked')){
+      $(".uncheck-checkbox").prop('checked', false)
+    }
+  }
+  uncheck_checkboxes()
+  check_selected_assets()
+
+
+  $('.unread .fa').addClass('animated flash');
+
+  // Multi-select assets
+  $(".content-section#assets.grid").selectable({
+    filter:".item",
+    cancel: 'a.open,button,input,#content-footer,.sticky-footer',
+    start: function() {
+      $(".dropdown").removeClass("open")
+      $("body").addClass("selecting")
+    },
+    stop: function() {
+      $("body").removeClass("selecting")
+      check_selected_assets()
+    }
+  })
+
+  // Manually do single click selecting because the draggable plugin overrides it
+  $(".asset").on("click", function(e) {
+    var $selected_asset = $(this).children(".asset-content").first()
+
+    if (e.metaKey == false) {
+      $(".asset-content").removeClass("ui-selected");
+      $selected_asset.addClass("ui-selecting");
+    }
+    else {
+      if ($selected_asset.hasClass("ui-selected")) {
+        $selected_asset.removeClass("ui-selected");
+      }
+      else {
+        $selected_asset.addClass("ui-selecting");
+      }
+    }
+    $(".content-section#assets.grid").data("ui-selectable")._mouseStop(null);
+  })
+
+  // Action bar pop-ups
+  // Show/hide tick next to select library on add to library pop up
+  $("body").on("click", ".add-to-lib", function(){
+    $(".add-to-lib.selected-lib").removeClass("selected-lib")
+    $(this).addClass('selected-lib')
+
+    if($(".selected-lib").length == 0) {
+      $("#add-assets-to-library .button[type=submit]").attr("disabled", "disabled")
+      $("#add-assets-to-library .button[type=submit]").addClass("disabled")
+    } else {
+      $("#add-assets-to-library .button[type=submit]").attr("disabled", false)
+      $("#add-assets-to-library .button[type=submit]").removeClass("disabled")
+    }
+  })
+
+  $("body").on("click", ".cancel-restore-asset", function(){
+    $.fancybox.close()
+    $(".node-options").hide()
+
+    $("tr.tr-asset-content input[type='checkbox']").each(function(i, row) {
+      var $row = $(row)
+      $row.prop("checked", false)
+      $row.removeClass('checked')
+      $row.closest('tr').removeClass("selected-tr ui-selected")
+    })
+
+    check_selected_assets()
+  })
+
+  // Close fancybox if the user clicks 'cancel'
+  $("body").on("click", ".delete-contained-assets", function(){
+    $("#fancyb-step-one").hide()
+    $("#fancyb-step-two").show()
+  })
+
+  $("body").on("click", "#edit-asset-info", function(e) {
+    e.preventDefault()
+    $("#asset-info span:not(.no-edit)").hide()
+    $("#asset-info input, #asset-info textarea, #cancel-edit-asset-info, #save-edit-asset-info").show()
+    $(".hidden-infofield").toggleClass("hidden")
+    $(this).hide()
+  });
+
+  $("body").on("click", "#cancel-edit-asset-info", function(e) {
+    e.preventDefault()
+    $("#asset-info span, #edit-asset-info").show()
+    $("#asset-info input, #asset-info textarea, #save-edit-asset-info, .errors .inline-message.error").hide()
+    $(".mandatory").removeClass("error-field")
+    $(".hidden-infofield").toggleClass("hidden")
+    $(this).hide()
+  });
+
+  // Notification popup behaviour
+  $(".content-section").on("mouseenter", ".notification-modal", function() {
+    $(".notification-modal").stop(true, false).animate({ opacity : 1 }, 300)
+  })
+
+  $(".content-section").on("mouseleave", ".notification-modal", function() {
+    $(".notification-modal").delay(1500).animate({
+      opacity: 0,
+      marginTop: '-20px'
+    }, 1000, 'easeInQuart',
+    function() {
+      $(".notification-modal").hide().remove()
+    })
+  })
+
+  // Delete single node after fancy confirmation
+  $("body").on("click", ".delete-collection-confirmation", function(e){
+    e.preventDefault()
+    e.stopPropagation()
+    $.fancybox.close()
+
+    var $clicked = $(this)
+    var collection_id = $clicked.closest("form").data("collection-id")
+    var collection_node = $('li.jstree-node.collection[data-id="' + collection_id + '"]')
+    if(collection_node.length == 0) {
+      collection_node = $('li.jstree-node.collection[dataid="' + collection_id + '"]')
+    }
+    var collection_node_id = collection_node.attr("id")
+    var delete_node = tree.get_node(collection_node_id)
+
+    if($clicked.hasClass("delete-assets")) {
+      submit_delete_node(delete_node, true)
+    } else {
+      submit_delete_node(delete_node, false)
+    }
+  })
+
+  $("body").on("click", ".show-more-details", function(e) {
+    e.preventDefault()
+    $(this).closest(".transform").find(".more-details").toggle()
+  })
+
+  $("body").on("click", "#multidownload button:not(.use-aspera)", function(e) {
+    e.preventDefault()
+
+    var files = []
+
+    // get all download links for the select download type
+    $("input[type=radio]:checked").closest(".radio").find("input[type=hidden]").each(function(i, elem) {
+      var path = $(elem).attr("data-download-url")
+      var file_name = $(elem).attr("data-download-filename")
+      // createDownloadIFrame(path, 100, 1000)
+      files.push({filename: file_name, download: path})
+    })
+
+    download_files(files)
+
+    $.fancybox.close()
+  })
+
+  $("body").on("click", "#multidownload button.use-aspera", function(e) {
+    e.preventDefault()
+
+    asperaWeb.showSelectFolderDialog({ success: function(transfer_obj) {
+      var dir = transfer_obj.dataTransfer.files[0].name
+      var files = $("input[type=radio]:checked").closest(".radio").find("input[type=hidden]")
+
+      files.each(function(i, elem) {
+        var path = $(elem).attr("data-transfer-spec-url")
+        // get transfer spec
+        $.ajax({
+          url: path,
+          data: {
+            "destination": dir
+          },
+          type: "GET",
+          dataType: "json",
+          contentType: "application/json",
+          error: function(data) {
+            server_log({ "message": "Could not retrieve Apsera Transfer Spec", "url": path })
+
+            if((i+1) == files.length) {
+              display_fancybox("<div class='fancybox-content'><i class='fa fa-exclamation-triangle animated'></i>Aspera is not available right now. We have been notified. Please try again later.</div>")
+              $.fancybox.close()
+            }
+          },
+          success: function(data, xhr) {
+            // start the transfer for this file
+            var transfer_spec = data.transfer_specs[0].transfer_spec
+            transfer_spec.authentication = "token"
+
+            asperaWeb.startTransfer(transfer_spec, { "use_absolute_destination_path": true }, { success: function(transfer) {
+              if((i+1) == files.length) {
+                $.fancybox.close()
+              }
+            }, error: function(error) {
+              server_log({ "message": "Could not start Apsera Transfer", "transfer_spec": transfer_spec, "error": error })
+              
+              if((i+1) == files.length) {
+                $.fancybox.close()
+              }
+            }})
+          }
+        })
+      })
+    }}, { "allowMultipleSelection": false })
+  })
+
+  // Adding selected assets to another library
+  $("body").on("click", "#add-assets-to-library button[type=submit]", function(e) {
+    e.preventDefault()
+
+    var selected_asset_ids = []
+    var library_url = $(".selected-lib").attr("data-add-assets-url")
+    var from_library = $("#add-assets-to-library input[name=from]").val()
+
+    if($(".selected-lib").length > 0) {
+      if($("#asset").length > 0) {
+        // we are on the asset show page so move that asset
+        selected_asset_ids.push($("#asset").attr("data-id"))
+      } else {
+        selected_asset_ids = get_selected_assets()
+      }
+
+      $.fancybox.close()
+      display_loader()
+
+      $.post(library_url, { asset_ids: selected_asset_ids, from: from_library }, function(data, status) {
+        hide_loader()
+        display_success("Assets added")
+      }).fail(function(obj, status, message) {
+        hide_loader()
+        if(obj.status == 403) {
+          display_fancybox("<div class='fancybox-content'>" + obj.responseJSON.message + "</div>")
+        } else {
+          display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong adding the assets. Please try again later.</div>")
+        }
+      })
+    }
+  })
+
+  $("body").on("click", ".action-bar-action .action.remove:not(.disabled-action-true)", function(e) {
+    e.preventDefault()
+    var url = $(this).attr("href")
+    var selected_asset_ids = get_selected_assets()
+
+    display_loader()
+    $.ajax({
+      url: url,
+      type: "DELETE",
+      data: { asset_ids: selected_asset_ids },
+      success: function(data, status, xhrObj) {
+        $.each(selected_asset_ids, function(i, asset_id) {
+          $("#asset-" + asset_id).remove()
+        })
+
+        hide_loader()
+        display_success("Assets Successfully Removed")
+      },
+      error: function(xhrObj, status, errorThrown) {
+        hide_loader()
+        display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong removing the assets. Please try again later.</div>")
+      }
+    })
+  })
+
+  // Filter Libraries on the Library Dashboard
+  $("#library-search").keyup(function() {
+    search_value = $(this).val().toLowerCase().trim()
+
+    if (search_value == "") {
+      $("#libraries-list .library").show()
+    } else {
+      $("#libraries-list .library").each(function() {
+        library_name = $(this).find("a.dashboard-library-link").text().toLowerCase().trim()
+
+        if (library_name.indexOf(search_value) > -1) {
+          $(this).show()
+        } else {
+          $(this).hide()
+        }
+
+      })
+    }
+
+    if ($("#libraries-list .library:visible").length == 0) {
+      $(".no-libraries-found").show()
+    } else {
+      $(".no-libraries-found").hide()
+    }
+  })
+
+  $("body").on("click", "#delete-assets-form button[type=submit]", function(e) {
+    e.preventDefault()
+    var url = $(this).closest("form").attr("action")
+    var asset_ids = get_selected_assets()
+    if(asset_ids.length == 0) {
+      var asset_id = $("#asset").attr("data-id")
+      if(asset_id) {
+        asset_ids = [asset_id]
+      }
+    }
+
+    if(asset_ids.length > 0) {
+      display_loader()
+      $.ajax({
+        url: url,
+        method: "DELETE",
+        data: { asset_ids: asset_ids },
+        success: function(response, status, xhr_object) {
+          if(response == "ok") {
+            $.each(asset_ids, function(i, asset_id) {
+              $("#asset-" + asset_id).remove()
+            })
+
+            display_success("Assets Deleted")
+          } else {
+            display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong deleting the assets. Please try again later.</div>")
+          }
+
+          if($("#asset").length > 0) {
+            // we're on the asset show page, so redirect back to the library
+            window.location = library_url
+          }
+
+          hide_loader()
+          check_selected_assets()
+        },
+        error: function() {
+          hide_loader()
+          display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong deleting the assets. Please try again later.</div>")
+        }
+      })
+    } else {
+      display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong deleting the assets. Please try again later.</div>")
+    }
+  })
+
+  $(".restore-asset-confirmation").click(function(){
+    var $row = $(this).closest("tr").find("input[type=checkbox]")
+
+    // deselect all other checkboxes
+    var $all_rows = $("tr.tr-asset-content input[type=checkbox]")
+    $all_rows.prop("checked", false)
+    $all_rows.removeClass('checked')
+    $all_rows.closest('tr').removeClass("selected-tr ui-selected")
+
+    // select the clicked checkbox only
+    $row.prop("checked", true)
+    $row.addClass('checked')
+    $row.closest('tr').addClass("selected-tr ui-selected")
+    check_selected_assets()
+  })
+
+  $("body").on("click", ".restore-asset", function(e){
+    e.preventDefault()
+    var url = $(this).attr("href")
+    restore_assets(url)
+  })
+
+  function restore_assets(url) {
+    var selected_asset_ids = get_selected_assets()
+    var selected_activity_ids = []
+
+    $(".deleted-assets-table input[type=checkbox]:checked").each(function(i, el) {
+      var id = $(el).closest("tr").attr("data-activity-id")
+      selected_activity_ids.push(id)
+    })
+
+    display_loader()
+    $.ajax({
+      url: url,
+      method: "POST",
+      data: { asset_ids: selected_asset_ids, activity_ids: selected_activity_ids },
+      success: function() {
+        $.each(selected_asset_ids, function(i, asset_id) {
+          $(".deleted-assets-table tr[data-id=" + asset_id + "]").remove()
+        })
+
+        hide_loader()
+        display_success("Assets Restored")
+        check_selected_assets()
+
+        if($(".deleted-assets-table tr.tr-asset-content").length == 0) {
+          $(".no-deleted-assets-message").removeClass("hidden")
+          $(".deleted-assets-table").remove()
+        }
+      },
+      error: function(xhrObj) {
+        hide_loader()
+
+        if(xhrObj.status == 403) {
+          display_fancybox("<div class='fancybox-content'>" + xhrObj.responseJSON.message + "</div>")
+        } else {
+          display_fancybox("<div class='fancybox-content'>Oh No! Something went wrong restoring the assets. Please try again later.</div>")
+        }
+      }
+    })
+  }
+
+  $('.asset-tool, .table-element-ellipsis').each(function () {
+    if ($(this)[0].scrollWidth <= $(this).innerWidth()) {
+      // Text is overflowing so destroy the tooltip on this element
+      $(this).tooltip('destroy');
+    }
+  })
+
+})

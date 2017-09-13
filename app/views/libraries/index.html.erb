@@ -1,0 +1,40 @@
+<% if @libraries.any? %>
+<div class="row marg-top-20" id="libraries-header">
+  <div class="col-md-6">
+    <form role="form">
+      <div class="form-group">
+        <label>Filter by name</label>
+        <input type="text" class="form-control" id="library-search" name="library-search" placeholder="Filter by name">
+      </div>
+    </form>
+    <span id="a-z-options">
+      Sort Alphabetically:
+      <% if params[:sort] && params[:sort].eql?("alphabetical") %>
+        <%= link_to("Off", libraries_path(display_libraries: "display_favourite_libraries"), class: view_type_active('display_favourite_libraries'), "data-toggle" => "tooltip", "title"=> "Sort by the order defined by Administrators") %>
+      <% else %>
+        <%= link_to("On", libraries_path(display_libraries: "display_favourite_libraries", sort: "alphabetical"), class: view_type_active('display_favourite_libraries')) %>
+      <% end %>
+    </span>
+  </div>
+</div>
+<ul id="libraries-list">
+  <% @libraries.each do |library| %>
+    <li class="library" id="library-<%= library.id %>">
+      <i class="fa fa-star <%= library_favourited_class(current_user, library) %>" data-behaviour="library_favourite" data-library-id="<%= library.id %>"></i>
+      <%= link_to library.name, library_path(library), class: 'dashboard-library-link large-library-link' %>
+    </li>
+  <% end %>
+</ul>
+<p class="no-libraries-found" style="display:none">No Libraries found. Please check your spelling and try again!</p>
+<% else %>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <div class="well placeholder marg-top-20 marg-bottom-0">
+          <p>The Application is up an running!</p>
+          <p>Now just run <b><i>rake db:seed</i></b> to get some sample data</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

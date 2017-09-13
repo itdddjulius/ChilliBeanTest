@@ -1,0 +1,11 @@
+<% content_for :asset_tab_content do %>
+  <div class="col-xs-12 no-pad">
+    <%= render 'shared/activity_list' %>
+    <% if @activity_size > Activity.per_page %>
+      <a href="<%= activity_library_asset_path(current_library, @asset) %>" class="load-more-activity button marg-top-10 marg-left-15" data-page="2">Load More Activity</a>
+      <%= link_to image_tag("system/spinner-70.gif", :height => "25", :class => "loader"), root_url %>
+    <% end %>
+  </div>
+<% end %>
+
+<%= render "shared/asset_layout" %>

@@ -1,0 +1,170 @@
+@import 'mixins';
+
+a.large-library-link {
+  color: $dark-blue;
+  font-size:20px;
+  font-weight:700;
+  display:block;
+  padding:15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap:normal;
+  &:hover {
+    background-color:$light-blue;
+    text-decoration:none;
+  }
+}
+
+/* Headers */
+
+.lib-dashboard-header {
+  border-bottom: solid 1px #E7E7E7;
+}
+
+/* Favourites */
+
+#favourites, #recent-libraries {
+	display:none;
+	@media (min-width: 992px) {
+		margin-top:20px;
+		display:block;
+		.favourites-wrap {
+			margin-bottom:20px;
+			border: 1px solid #E4E4E4;
+			background:#ffffff;
+			@include border-radius(4px);
+			min-height: 290px;
+			position:relative;
+		}
+		a, p {
+			overflow: hidden;
+	    text-overflow: ellipsis;
+	    white-space: nowrap;
+	    word-wrap:normal;
+		}
+		a.large {
+			@include border-radius(3px 3px 0 0);
+		}
+		p.no-activity {
+			padding:15px;
+		}
+		.fav-bottom-panel {
+			background:#F9F9F9;
+			border-bottom-right-radius: 3px;
+			border-bottom-left-radius: 3px;
+			position: absolute;
+		  bottom: 0;
+		  right: 0;
+		  left: 0;
+			ul {
+				float:right;
+				.fa {
+					font-size:20px;
+					margin-right:0px;
+				}
+				li {
+					background: $dark-blue;
+					height: 40px;
+					padding: 10px 20px 10px 20px;
+					float: right;
+					border-bottom-right-radius: 3px;
+					text-align: center;
+					color: #ffffff;
+					&.white {
+						background:#ffffff;
+					}
+				}
+			}
+			a {
+				@include border-radius(3px 3px 0 0);
+				position: absolute;
+				margin: 12px 0px 0px 15px;
+			}
+		}
+	}
+}
+
+.favourited {
+  color:$dark-blue;
+}
+
+#fav-placeholder {
+  border: 2px dashed #DDD;
+  @include border-radius(2px);
+  display: block;
+  font-size: 20px;
+  padding: 25px;
+  text-align: center;
+  color: #228f8f;
+  margin-bottom:20px;
+  h3 {
+    margin-top:5px;
+    color:$light-grey;
+    font-weight:400;
+  }
+  .fa {
+    font-size:30px;
+    color:$light-grey;
+  }
+}
+
+.fa-star {
+  color:#C8C8C8;
+  &:hover {
+    color:grey;
+  }
+  &.favourited {
+    color:$dark-blue;
+    cursor:pointer;
+  }
+}
+
+/* Libraries List */
+
+#library-search {
+  height:50px;
+  font-size:20px;
+}
+
+body {
+  #libraries-header label {
+    display:none;
+  }
+  &.ie8, &.ie9 {
+    #libraries-header label {
+      display:block;
+    }
+  }
+}
+
+span#a-z-options {
+  margin-bottom: 15px;
+  float: left;
+  a {
+    text-decoration:underline!important;
+    &:hover {
+      text-decoration:none!important;
+    }
+  }
+}
+
+ul#libraries-list {
+  li {
+    background: #F6F6F6;
+    .fa {
+      float: left;
+      font-size: 18px;
+      padding: 20px 10px 20px 10px;
+      cursor: pointer;
+      margin-right: 0px;
+    }
+    &:nth-child(odd) {
+      background:#EFEFEF;
+    }
+  }
+}
+
+p.no-libraries-found {
+  font-size:15px;
+}

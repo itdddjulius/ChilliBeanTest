@@ -1,0 +1,38 @@
+<div id="content-section-wrap">
+  <div id="assets" class="content-section list">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 no-pad">
+          <table class="list-table">
+            <tr class="sub-header dark hidden-tr">
+              <th></th>
+              <th></th>
+              <th>
+                <% if params[:sort] && params[:sort].eql?("title_desc") %>
+                  <%= link_to content_tag(:i, "", class: "fa fa-sort-alpha-desc"), sort_link(:title_asc, params[:filter], params[:search], "library", current_library) %>
+                <% elsif params[:sort] && params[:sort].eql?("title_asc") %>
+                  <%= link_to content_tag(:i, "", class: "fa fa-sort-alpha-asc"), sort_link(:title_desc, params[:filter], params[:search], "library", current_library) %>
+                <% else %>
+                <%= link_to content_tag(:i, "", class: "fa fa-sort"), sort_link(:title_asc, params[:filter], params[:search], "library", current_library) %>
+                <% end %> Title
+              </th>
+              <th>
+                <% if params[:sort] && params[:sort].eql?("created_at_desc") %>
+                  <%= link_to content_tag(:i, "", class: "fa fa-sort-down"), sort_link(:created_at_asc, params[:filter], params[:search], "library", current_library) %>
+                <% elsif params[:sort] && params[:sort].eql?("created_at_asc") %>
+                  <%= link_to content_tag(:i, "", class: "fa fa-sort-up"), sort_link(:created_at_desc, params[:filter], params[:search], "library", current_library) %>
+                <% else %>
+                <%= link_to content_tag(:i, "", class: "fa fa-sort"), sort_link(:created_at_asc, params[:filter], params[:search], "library", current_library) %>
+                <% end %>
+                Upload Date
+              </th>
+              <th></th>
+              <th></th>
+            </tr>
+            <%= render partial: 'shared/list_asset', collection: @assets, as: :asset %>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

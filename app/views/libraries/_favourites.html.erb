@@ -1,0 +1,43 @@
+<div id="favourites">
+  <% if current_user.favourite_libraries_for_account(current_account).empty? %>
+    <div id="fav-placeholder">
+      <i class="fa fa-th"></i>
+      <h3 class="marg-bottom-0">Favourited libraries appear here for easy access</h3>
+    </div>
+  <% else %>
+    <div class="row">
+      <% current_user.favourite_libraries_for_account(current_account).each do |library| %>
+        <div class="col-md-4" id="favourite-library-<%= library.id %>">
+          <div class="favourites-wrap">
+            <%= link_to library.name, library_path(library), class: 'large-library-link' %>
+            <% library.recent_activities.each do |activity| %>
+              <div class="media favourite">
+                <div class="media-left">
+                  <%= avatar("img-responsive avatar small") %>
+                </div>
+                <div class="media-body">
+                  <p><%= render partial: "activity/#{activity.action}.html.erb", locals: { activity: activity } %></p>
+                  <p><i><%= date_format(activity.created_at) %></i></p>
+                </div>
+              </div>
+            <% end %>
+            <% if library.recent_activities.empty? %>
+              <p class="no-activity"><i>No Activity...</i></p>
+            <% end %>
+            <div class="fav-bottom-panel clearfix">
+              <%= link_to "View More Activity", activity_library_path(library) %>
+              <ul>
+                <li>
+                  <%= library.assets.count %>
+                </li>
+                <li class="white">
+                  <i class="fa fa-star favourited" data-behaviour="library_favourite" data-library-id="<%= library.id %>"></i>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

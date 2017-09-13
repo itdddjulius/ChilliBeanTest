@@ -1,0 +1,5 @@
+<% if @asset && @asset.id.eql?(activity.activity_object_id) %>
+  <%= I18n.t("commented_on_this_asset", scope: :activity_actions, user: activity_creator_text(activity), comment: secondary_object_text(activity)).html_safe %>
+<% else %>
+  <%= I18n.t("commented_on_asset", scope: :activity_actions, user: activity_creator_text(activity), file: asset_text(activity), comment: secondary_object_text(activity)).html_safe %>
+<% end %>
