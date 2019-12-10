@@ -53,3 +53,18 @@ Wipe the database:
 Recreate:
 
 `rake db:setup`
+
+## Julius Olatokunbo- Modifications
+-- As per ChilliBean Test - (libraries_controller.rb)
+    if params[:filter] && params[:filter].eql?("video")
+      @assets = Asset.where(file_type: 0)
+    end
+    if params[:filter] && params[:filter].eql?("image")
+      @assets = Asset.where(file_type: 1)
+    end
+    if params[:filter] && params[:filter].eql?("audio")
+      @assets = Asset.where(file_type: 2)
+    end
+============================================================
+
+
