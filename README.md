@@ -55,7 +55,8 @@ Recreate:
 `rake db:setup`
 
 ## Julius Olatokunbo- Modifications
--- As per ChilliBean Test - (libraries_controller.rb)
+As per ChilliBean Test - (libraries_controller.rb)
+
     if params[:filter] && params[:filter].eql?("video")
       @assets = Asset.where(file_type: 0)
     end
